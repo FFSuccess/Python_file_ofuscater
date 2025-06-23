@@ -2,7 +2,8 @@ import random
 import base64
 
 file_to_obfuscate = input("Give file path: ")
-passes = int(input("How many times do you want your file to be encrypted? "))+1
+passes = int(input("How many times do you want your file to be encrypted? ")) + 1
+
 
 def generate_decrypt_function():
     return '''def decrypt_caesar(key, message):
@@ -13,20 +14,23 @@ def generate_decrypt_function():
         return_message += chr(shifted)
     return return_message'''
 
-for i in range(0,passes):
-    def encrypt_caesar(key, message):
-        return_message = ""
-        for char in message:
-            ascii_val = ord(char)
-            shifted = (ascii_val + key) % 256
-            return_message += chr(shifted)
-        return return_message
+def encrypt_caesar(key, message):
+    return_message = ""
+    for char in message:
+        ascii_val = ord(char)
+        shifted = (ascii_val + key) % 256
+        return_message += chr(shifted)
+    return return_message
 
+for i in range(0, passes):
     try:
         with open(file_to_obfuscate, "r", encoding='utf-8') as file:
             content = file.read()
     except FileNotFoundError:
         print("File not found!")
+        exit()
+    if len(content) >= 8869782:
+        print("File too big, terminating!")
         exit()
     rand_key = random.randint(1, 255)
     encrypted_content = encrypt_caesar(rand_key, content)
@@ -34,9 +38,9 @@ for i in range(0,passes):
     obfuscated_code = f'''import base64
 encrypted_data = "{base64_content}"
 key = {rand_key}
-    
+
 {generate_decrypt_function()}
-    
+
 decoded = base64.b64decode(encrypted_data).decode('latin-1')
 original_code = decrypt_caesar(key, decoded)
 exec(original_code)'''
