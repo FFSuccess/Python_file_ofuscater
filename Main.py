@@ -41,6 +41,24 @@ for i in range(1, passes+1):
     temp_4 = 'Q'
     for x in range(0, 20):
         temp_4 += letters[random.randint(0, 61)]
+    temp_5 = 'Q'
+    for x in range(0, 20):
+        temp_5 += letters[random.randint(0, 61)]
+    temp_6 = 'Q'
+    for x in range(0, 20):
+        temp_6 += letters[random.randint(0, 61)]
+    temp_7 = 'Q'
+    for x in range(0, 20):
+        temp_7 += letters[random.randint(0, 61)]
+    temp_8 = 'Q'
+    for x in range(0, 20):
+        temp_8 += letters[random.randint(0, 61)]
+    temp_9 = 'Q'
+    for x in range(0, 20):
+        temp_9 += letters[random.randint(0, 61)]
+    temp_10 = 'Q'
+    for x in range(0, 20):
+        temp_10 += letters[random.randint(0, 61)]
     def generate_decrypt_2():
         return f'''def {temp}({temp_2}, {temp_3}):
         {temp_4} = Fernet({temp_2}.encode('utf-8'))
@@ -50,10 +68,9 @@ for i in range(1, passes+1):
     def generate_caesar_function():
         return f'''def {temp}({temp_2}, {temp_3}):
         {temp_4} = ""
-        for char in {temp_3}:
-            ascii_val = ord(char)
-            shifted = (ascii_val - {temp_2}) % 256
-            {temp_4} += chr(shifted)
+        for {temp_5} in {temp_3}:
+            {temp_6} = ord({temp_5})
+            {temp_4} += chr(({temp_6} - {temp_2}) % 256)
         return {temp_4}'''
 
     try:
@@ -78,14 +95,13 @@ for i in range(1, passes+1):
         func_to_use = generate_decrypt_2()
     obfuscated_code = f'''import base64
 from cryptography.fernet import Fernet
-encrypted_data = "{base64_content}"
-key = {rand_key}
+{temp_7} = "{base64_content}"
 
 {func_to_use}
 
-decoded = base64.b64decode(encrypted_data).decode('latin-1')
-original_code = {temp}(key, decoded)
-exec(original_code)'''
+{temp_8} = base64.b64decode({temp_7}).decode('latin-1')
+{temp_9} = {temp}({rand_key}, {temp_8})
+exec({temp_9})'''
     with open(file_to_obfuscate, "w", encoding='utf-8') as new_file:
         new_file.write(obfuscated_code)
     print(f"File obfuscated to: {file_to_obfuscate} on pass {i} using {method}.")
