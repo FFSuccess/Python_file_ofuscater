@@ -1,12 +1,13 @@
 import random
 import base64
+from cryptography.fernet import Fernet
 
 file_to_obfuscate = input("Give file path: ")
-passes = int(input("How many times do you want your file to be encrypted? ")) + 1
+passes = int(input("How many times do you want your file to be encrypted? "))
 
 
-def generate_decrypt_function():
-    return '''def decrypt_caesar(key, message):
+def generate_caesar_function():
+    return '''def decrypt(key, message):
     return_message = ""
     for char in message:
         ascii_val = ord(char)
@@ -22,7 +23,18 @@ def encrypt_caesar(key, message):
         return_message += chr(shifted)
     return return_message
 
-for i in range(0, passes):
+def encrypt_2(message):
+    key = Fernet.generate_key()
+    f = Fernet(key)
+    encrypted = f.encrypt(message.encode('utf-8'))
+    return f"\"{key.decode('utf-8')}\"", encrypted.decode('utf-8')
+
+def generate_decrypt_2():
+    return '''def decrypt(key, message):
+    f = Fernet(key.encode('utf-8'))
+    return f.decrypt(message.encode('utf-8')).decode('utf-8')'''
+
+for i in range(1, passes+1):
     try:
         with open(file_to_obfuscate, "r", encoding='utf-8') as file:
             content = file.read()
@@ -32,18 +44,27 @@ for i in range(0, passes):
     if len(content) >= 8869782:
         print("File too big, terminating!")
         exit()
-    rand_key = random.randint(1, 255)
-    encrypted_content = encrypt_caesar(rand_key, content)
-    base64_content = base64.b64encode(encrypted_content.encode('latin-1')).decode('ascii')
+    if random.randint(1,2) == 2:
+        method = "ceaser"
+        rand_key = random.randint(1, 255)
+        encrypted_content = encrypt_caesar(rand_key, content)
+        base64_content = base64.b64encode(encrypted_content.encode('latin-1')).decode('ascii')
+        func_to_use = generate_caesar_function()
+    else:
+        method = "encryption"
+        rand_key, encrypted_content = encrypt_2(content)
+        base64_content = base64.b64encode(encrypted_content.encode('latin-1')).decode('ascii')
+        func_to_use = generate_decrypt_2()
     obfuscated_code = f'''import base64
+from cryptography.fernet import Fernet
 encrypted_data = "{base64_content}"
 key = {rand_key}
 
-{generate_decrypt_function()}
+{func_to_use}
 
 decoded = base64.b64decode(encrypted_data).decode('latin-1')
-original_code = decrypt_caesar(key, decoded)
+original_code = decrypt(key, decoded)
 exec(original_code)'''
     with open(file_to_obfuscate, "w", encoding='utf-8') as new_file:
         new_file.write(obfuscated_code)
-    print(f"File obfuscated to: {file_to_obfuscate} on pass {i}.")
+    print(f"File obfuscated to: {file_to_obfuscate} on pass {i} using {method}.")
