@@ -4,6 +4,10 @@ from cryptography.fernet import Fernet
 
 file_to_obfuscate = input("Give file path: ")
 passes = int(input("How many times do you want your file to be encrypted? "))
+MAX_FILE_CONTENTS = 1169782
+NUM_OF_FAKE_KEYS = 100
+MIN_VARIABLE_LENGTH = 20
+MAX_VARIABLE_LENGTH = 30
 
 
 letters = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E',
@@ -29,39 +33,42 @@ def encrypt_2(message):
 
 def generate_random_string():
     string_to_return = 'Q'
-    for x in range(0, random.randint(20,30)):
-        string_to_return += letters[random.randint(0, 61)]
+    for p in range(1, random.randint(MIN_VARIABLE_LENGTH,MAX_VARIABLE_LENGTH)):
+        string_to_return += letters[random.randint(0, len(letters)-1)]
     return string_to_return
 
 def generate_random_key():
     key_letters = letters + ["-", "="]
     string_to_return = ''
-    for x in range(0, 43):
-        string_to_return += key_letters[random.randint(0, 63)]
+    for q in range(1, 44): #because key size is 44 chars
+        string_to_return += key_letters[random.randint(0, len(key_letters)-1)]
     return string_to_return
 
-#begin offuscating recursively
+#begin obfuscation recursively
 for i in range(1, passes+1):
     #generate random variable names
     function_name = generate_random_string()
     parameter_name_1 = generate_random_string()
     parameter_name_2 = generate_random_string()
     return_variable_name = generate_random_string()
-    charecter_variable_name = generate_random_string()
+    character_variable_name = generate_random_string()
     index_of_char_variable = generate_random_string()
-    random_base64_contence = generate_random_string()
+    random_base64_contents = generate_random_string()
     cipher_text_variable = generate_random_string()
     decryption_key_variable = generate_random_string()
-    temp_list = []
-    for x in range(0, 100):
-        temp_list.append(generate_random_string())
+    list_of_keys_random_name = generate_random_string()
+    keys_in_list_random_name = generate_random_string()
 
-    #hide key in list
-    temp_list.append(decryption_key_variable)
-    random.shuffle(temp_list)
-    temp_11 = ''
+    #generate fake key variable names
+    list_of_keys = []
+    for x in range(1, NUM_OF_FAKE_KEYS):
+        list_of_keys.append(generate_random_string())
 
-    #introduce deoffuscation functions
+    #add actual key to list of fakes and shuffle
+    list_of_keys.append(decryption_key_variable)
+    random.shuffle(list_of_keys)
+
+    #introduce deobfuscation functions
     def generate_decrypt_2():
         return f'''def {function_name}({parameter_name_1}, {parameter_name_2}):
     try:
@@ -74,22 +81,22 @@ for i in range(1, passes+1):
         return f'''def {function_name}({parameter_name_1}, {parameter_name_2}):
     try:
         {return_variable_name} = ""
-        for {charecter_variable_name} in {parameter_name_2}:
-            {index_of_char_variable} = ord({charecter_variable_name})
+        for {character_variable_name} in {parameter_name_2}:
+            {index_of_char_variable} = ord({character_variable_name})
             {return_variable_name} += chr(({index_of_char_variable} - {parameter_name_1}) % 256)
         return {return_variable_name}
     except:
         pass
 '''
     
-    #read contence of target file
+    #read contents of target file
     try:
         with open(file_to_obfuscate, "r", encoding='utf-8') as file:
             content = file.read()
     except FileNotFoundError:
         print("File not found!")
         exit()
-    if len(content) >= 1169782:
+    if len(content) >= MAX_FILE_CONTENTS:
         print("File too big, terminating!")
         exit()
 
@@ -106,37 +113,38 @@ for i in range(1, passes+1):
         base64_content = base64.b64encode(encrypted_content.encode("latin-1")).decode("ascii")
         func_to_use = generate_decrypt_2()
 
-    #genarate dud keys
-    for x in temp_list:
-        if x != decryption_key_variable:
+    #genarate dud keys, assign variable, and format
+    string_to_declare_keys = ''
+    for key_in_list in list_of_keys:
+        if key_in_list != decryption_key_variable:
             if method == "encryption":
-                temp_12 = generate_random_key()
-                temp_11 += f'{x} = {function_name}("{temp_12}", {cipher_text_variable})\n'
+                random_key = generate_random_key()
+                string_to_declare_keys += f'{key_in_list} = {function_name}("{random_key}", {cipher_text_variable})\n'
             else:
-                temp_12 = random.randint(1, 255)
-                while temp_12 == rand_key:
-                    temp_12 = random.randint(1, 255)
-                temp_11 += f'{x} = {function_name}({temp_12}, {cipher_text_variable})\n'
+                random_key = random.randint(1, 255)
+                while random_key == rand_key:
+                    random_key = random.randint(1, 255)
+                string_to_declare_keys += f'{key_in_list} = {function_name}({random_key}, {cipher_text_variable})\n'
         else:
-            temp_11 += f'{decryption_key_variable} = {function_name}({rand_key}, {cipher_text_variable})\n'
+            string_to_declare_keys += f'{key_in_list} = {function_name}({rand_key}, {cipher_text_variable})\n'
             
-    #determine final output string
+    #format final output string
     obfuscated_code = f'''import base64
 from cryptography.fernet import Fernet
-{random_base64_contence} = "{base64_content}"
+{random_base64_contents} = "{base64_content}"
 
 {func_to_use}
 
-{cipher_text_variable} = base64.b64decode({random_base64_contence}).decode("latin-1")
-{temp_11}
-rand_list = {str(temp_list).replace("'", "")}
-for i in rand_list:
+{cipher_text_variable} = base64.b64decode({random_base64_contents}).decode("latin-1")
+{string_to_declare_keys}
+{list_of_keys_random_name} = {str(list_of_keys).replace("'", "")}
+for {keys_in_list_random_name} in {list_of_keys_random_name}:
     try:
-        exec(i)
+        exec({keys_in_list_random_name})
     except:
         pass
 '''
-    #write to file
+    #write obfuscated code to file
     with open(file_to_obfuscate, "w", encoding='utf-8') as new_file:
         new_file.write(obfuscated_code)
     print(f"File obfuscated to: {file_to_obfuscate} on pass {i} using {method}.")
