@@ -3,9 +3,16 @@ import base64
 from cryptography.fernet import Fernet
 
 file_to_obfuscate = input("Give file path: ")
-passes = int(input("How many times do you want your file to be encrypted? "))
+Number_wanted = True
+while Number_wanted:
+    try:
+        passes = int(input("How many times do you want your file to be encrypted? "))
+        Number_wanted = False
+    except ValueError:
+        print("Please enter a number.")
 MAX_FILE_CONTENTS = 1169782
-NUM_OF_FAKE_KEYS = 100
+MAX_NUM_OF_FAKE_KEYS = 100
+MIN_NUM_OF_FAKE_KEYS = 80
 MIN_VARIABLE_LENGTH = 20
 MAX_VARIABLE_LENGTH = 30
 
@@ -61,7 +68,7 @@ for i in range(1, passes+1):
 
     #generate fake key variable names
     list_of_keys = []
-    for x in range(1, NUM_OF_FAKE_KEYS):
+    for x in range(1, random.randint(MIN_NUM_OF_FAKE_KEYS,MAX_NUM_OF_FAKE_KEYS)):
         list_of_keys.append(generate_random_string())
 
     #add actual key to list of fakes and shuffle
